@@ -78,6 +78,7 @@ css_style(Style) -->
       atom_codes(Value, ValueCodes) },
     "  ", AttrCodes, ": ", ValueCodes, ";\n".
 
+:- meta_predicate write_css(//, -).
 %!  write_css(+Css, -String) is semidet.
 %
 %   True when String is the Css DCG written out as a string.
