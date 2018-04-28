@@ -46,7 +46,7 @@ p .thing {
   margin: 0 auto;
   font-family: monospace;
 }
-span {
+p span {
   color: red;
 }
 ", Txt = ExpectTxt.

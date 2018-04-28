@@ -23,12 +23,15 @@ split([H|T], Div, [[H|First]|Rest]) :-
     %% dif(H, Div),
     split(T, Div, [First|Rest]).
 
+:- dynamic initial_context/1.
+
 %!  css(+Content)// is det
 %
 %  Generate CSS string from Content.
 css(Content) -->
-    { ensure_list(Content, Content_) },
-    css_children([], Content_),
+    { ensure_list(Content, Content_),
+      (initial_context(Ctx) ; Ctx = []) },
+    css_children(Ctx, Content_),
     { ! }.
 
 css_children(_, []) --> [], { ! }.
@@ -47,9 +50,11 @@ selector_styles(_, []) --> [], { ! }.
 selector_styles(Selector, Styles) -->
     Selector, " {\n", css_styles(Styles), "}\n".
 
-% TODO: use the Ctx argument for nested references
-css_child(_Ctx, \(Reference)) -->
-    call(Reference).
+css_child(Ctx, \(Reference), In, Out) :-
+   setup_call_cleanup(
+       assert(initial_context(Ctx)),
+       call(Reference, In, Out),
+       retract(initial_context(Ctx))).
 css_child(Ctx, Thing) -->
     { Thing =.. [Sel,StyleOrStyles],
       ( is_list(StyleOrStyles)
