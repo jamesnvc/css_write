@@ -60,7 +60,7 @@ css_child(Ctx, Thing) -->
 css_child(Ctx, Thing) -->
     { Thing =.. [Sel,Styles,Children],
       ThingStyles =.. [Sel,Styles] },
-    css_child(Ctx, ThingStyles), "\n",
+    css_child(Ctx, ThingStyles),
     { text_to_string(Sel, SelStr),
       string_codes(SelStr, SelStrCodes),
       add_selector(Ctx, SelStrCodes, SubCtx),
@@ -76,7 +76,7 @@ css_style(Style) -->
     { Style =.. [Attr, Value],
       atom_codes(Attr, AttrCodes),
       atom_codes(Value, ValueCodes) },
-    "  ", AttrCodes, ":", ValueCodes, ";\n".
+    "  ", AttrCodes, ": ", ValueCodes, ";\n".
 
 %!  write_css(+Css, -String) is semidet.
 %
