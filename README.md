@@ -31,6 +31,21 @@ p strong { color: blue; }
 p strong emph { color: red; }
 ```
 
+One special extension to the CSS syntax is added: if a selector begins with `&`, the ampersand will be replaced with the parent rule.
+For example,
+
+```prolog
+p(color(red),
+  '&:hover'(color(blue))).
+```
+
+Generates
+
+```css
+p { color: red; }
+p:hover { color: blue; }
+```
+
 ## Examples
 
 Using with `html_write`
