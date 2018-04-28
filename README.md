@@ -1,6 +1,8 @@
-# write_css
+# css_write
 
 This Prolog library provides a DCG, `css//1` for generating CSS in the style of [`html//`](http://www.swi-prolog.org/pldoc/doc_for?object=html//1).
+
+You can install it by running `pack_install(css_write).` or [view it in the SWI-Prolog package directory](http://www.swi-prolog.org/pack/list?p=css_write).
 
 You can use this to write CSS rules as nested functors with arity one or two; see below for examples.
 
