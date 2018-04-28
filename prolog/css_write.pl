@@ -47,6 +47,9 @@ selector_styles(_, []) --> [], { ! }.
 selector_styles(Selector, Styles) -->
     Selector, " {\n", css_styles(Styles), "}\n".
 
+% TODO: use the Ctx argument for nested references
+css_child(_Ctx, \(Reference)) -->
+    call(Reference).
 css_child(Ctx, Thing) -->
     { Thing =.. [Sel,StyleOrStyles],
       ( is_list(StyleOrStyles)

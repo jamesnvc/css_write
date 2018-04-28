@@ -48,6 +48,30 @@ p { color: red; }
 p:hover { color: blue; }
 ```
 
+To include a CSS DCG inside another one, you write `\(module:other_dcg)`.
+For example:
+
+```prolog
+:- module(foo, []).
+
+some_css -->
+  css([code('font-family'('"PragmataPro Mono"))]).
+
+main_css -->
+   css([body(margin('3em')),
+        \(foo:some_css)]).
+```
+
+Generates
+
+```css
+body { margin: 3em; }
+code { font-family: "PragmataPro Mono"; }
+```
+
+Note that currently included rules won't get the context they're under, so they only make sense at the "top level" of the CSS, as shown above.
+I consider this a bug and will try to address it.
+
 ## Examples
 
 Using with `html_write`
