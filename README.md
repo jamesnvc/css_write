@@ -69,8 +69,7 @@ body { margin: 3em; }
 code { font-family: "PragmataPro Mono"; }
 ```
 
-Note that currently included rules won't get the context they're under, so they only make sense at the "top level" of the CSS, as shown above.
-I consider this a bug and will try to address it.
+See the example in `tests/` for some more complicated usage.
 
 ## Examples
 
