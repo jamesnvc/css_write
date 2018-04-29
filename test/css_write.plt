@@ -6,8 +6,12 @@
 user:extra_css -->
     css([code('font-family'('"PragmataPro Mono"'))]).
 
+user:nested -->
+    css(['*'(margin(0))]).
+
 user:bloop -->
-    css([span(color(red))]).
+    css([span(color(red),
+              [\(user:nested)])]).
 
 user:main_css -->
     css([body(margin('3em')),
@@ -23,6 +27,7 @@ user:main_css -->
 
 test(css_basics) :-
     write_css(main_css, Txt),
+    debug(xxx, "~w", [Txt]),
     ExpectTxt = "body {
   margin: 3em;
 }
@@ -48,6 +53,9 @@ p .thing {
 }
 p span {
   color: red;
+}
+p span * {
+  margin: 0;
 }
 ", Txt = ExpectTxt.
 

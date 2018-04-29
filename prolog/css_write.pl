@@ -1,6 +1,7 @@
 :- module(css_write, [css//1,
                       write_css/2]).
 
+:- use_module(library(apply), [foldl/4]).
 :- use_module(library(list_util), [take/3]).
 
 ensure_list(X, X) :- is_list(X), !.
@@ -23,58 +24,38 @@ split([H|T], Div, [[H|First]|Rest]) :-
     %% dif(H, Div),
     split(T, Div, [First|Rest]).
 
-:- dynamic initial_context/1.
-
 %!  css(+Content)// is det
 %
 %  Generate CSS string from Content.
 css(Content) -->
-    { ensure_list(Content, Content_),
-      (initial_context(Ctx) ; Ctx = []) },
-    css_children(Ctx, Content_),
-    { ! }.
+    css_children(Content), { ! }.
 
-css_children(_, []) --> [], { ! }.
-css_children(Ctx, [Thing|Things]) -->
-    css_child(Ctx, Thing), css_children(Ctx, Things).
+css_children([]) --> [], { ! }.
+css_children([Thing|Things]) -->
+    css_child(Thing), css_children(Things).
 
-add_selector(Ctx, [0'&|SubSel], NewCtx) :-
-    last(Ctx, Parent),
-    append(Parent, SubSel, NewSel),
-    butlast(Ctx, CtxHead),
-    append(CtxHead, [NewSel], NewCtx), !.
-add_selector(Ctx, SubSel, NewCtx) :-
-    append(Ctx, [SubSel], NewCtx).
-
-selector_styles(_, []) --> [], { ! }.
-selector_styles(Selector, Styles) -->
-    Selector, " {\n", css_styles(Styles), "}\n".
-
-css_child(Ctx, \(Reference), In, Out) :-
-   setup_call_cleanup(
-       assert(initial_context(Ctx)),
-       call(Reference, In, Out),
-       retract(initial_context(Ctx))).
-css_child(Ctx, Thing) -->
+css_child(\(Reference)) -->
+   call(Reference).
+css_child(Thing) -->
     { Thing =.. [Sel,StyleOrStyles],
       ( is_list(StyleOrStyles)
       -> Styles = StyleOrStyles
       ;  Styles = [StyleOrStyles] ),
       text_to_string(Sel, SelStr),
-      string_codes(SelStr, SelStrCodes_),
-      add_selector(Ctx, SelStrCodes_, CurrentCtx),
-      split(Selector, 0' , CurrentCtx) },
-    selector_styles(Selector, Styles).
-css_child(Ctx, Thing) -->
+      string_codes(SelStr, SelStrCodes) },
+    [begin_styles(SelStrCodes)],
+    css_styles(Styles),
+    [end_styles(SelStrCodes)].
+css_child(Thing) -->
     { Thing =.. [Sel,Styles,Children],
       ThingStyles =.. [Sel,Styles] },
-    css_child(Ctx, ThingStyles),
+    css_child(ThingStyles),
     { text_to_string(Sel, SelStr),
       string_codes(SelStr, SelStrCodes),
-      add_selector(Ctx, SelStrCodes, SubCtx),
-      ensure_list(Children, Children_)
-    },
-    css_children(SubCtx, Children_).
+      ensure_list(Children, Children_) },
+    [begin_ctx(SelStrCodes)],
+    css_children(Children_),
+    [end_ctx(SelStrCodes)].
 
 css_styles([]) --> [], { ! }.
 css_styles([Style|Styles]) -->
@@ -84,12 +65,44 @@ css_style(Style) -->
     { Style =.. [Attr, Value],
       atom_codes(Attr, AttrCodes),
       atom_codes(Value, ValueCodes) },
-    "  ", AttrCodes, ": ", ValueCodes, ";\n".
+    [style(AttrCodes, ValueCodes)].
 
 :- meta_predicate write_css(//, -).
 %!  write_css(+Css, -String) is semidet.
 %
 %   True when String is the Css DCG written out as a string.
 write_css(Css, String) :-
-    phrase(Css, Codes),
+    phrase(Css, Elements),
+    phrase(css_tokens([], Elements), Codes), !,
     string_codes(String, Codes).
+
+css_tokens(_, []) --> [].
+css_tokens(Ctx, [begin_styles(S),end_styles(S)|Next]) -->
+    css_tokens(Ctx, Next), { ! }.
+css_tokens(Ctx, [begin_styles(SelCodes)|Next]) -->
+    { append(Ctx, [SelCodes], CombinedCtx),
+      collapse_ampersands(CombinedCtx, DerivedSels),
+      split(DerivedSel, 0' , DerivedSels) },
+    DerivedSel, " {\n", css_tokens(Ctx, Next).
+css_tokens(Ctx, [end_styles(_)|Next]) -->
+    "}\n", css_tokens(Ctx, Next).
+css_tokens(Ctx, [style(Prop, Val)|Next]) -->
+    "  ", Prop, ": ", Val, ";\n",
+    css_tokens(Ctx, Next).
+css_tokens(Ctx, [begin_ctx(AddCtx)|Next]) -->
+    { append(Ctx, [AddCtx], NewCtx) },
+    css_tokens(NewCtx, Next).
+css_tokens(Ctx, [end_ctx(_)|Next]) -->
+    { butlast(Ctx, NewCtx) },
+    css_tokens(NewCtx, Next).
+
+collapse_ampersands(Sels, CollapsedSels) :-
+    foldl(add_selector, Sels, [], CollapsedSels).
+
+add_selector([0'&|SubSel], Ctx, NewCtx) :-
+    last(Ctx, Parent),
+    append(Parent, SubSel, NewSel),
+    butlast(Ctx, CtxHead),
+    append(CtxHead, [NewSel], NewCtx), !.
+add_selector(SubSel, Ctx, NewCtx) :-
+    append(Ctx, [SubSel], NewCtx).
