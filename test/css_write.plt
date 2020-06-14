@@ -27,7 +27,6 @@ user:main_css -->
 
 test(css_basics) :-
     write_css(main_css, Txt),
-    debug(xxx, "~w", [Txt]),
     ExpectTxt = "body {
   margin: 3em;
 }
@@ -58,5 +57,15 @@ p span * {
   margin: 0;
 }
 ", Txt = ExpectTxt.
+
+test(import_statement,
+    true( Txt == "@import url(\"https://example.com/font?family=123\");
+body p {
+  font-family: 123;
+}
+")) :-
+    write_css(css(['@import'(url('https://example.com/font?family=123')),
+                   body([], p('font-family'(123)))]),
+              Txt).
 
 :- end_tests(css_write).

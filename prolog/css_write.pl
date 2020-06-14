@@ -1,8 +1,10 @@
 :- module(css_write, [css//1,
                       write_css/2]).
 
-:- use_module(library(apply), [foldl/4]).
+:- use_module(library(apply), [foldl/4, partition/4]).
+:- use_module(library(lists), [append/3, last/2]).
 :- use_module(library(list_util), [take/3]).
+:- use_module(library(yall)).
 
 ensure_list(X, X) :- is_list(X), !.
 ensure_list(X, [X]).
@@ -36,6 +38,7 @@ css_children([Thing|Things]) -->
 
 css_child(\(Reference)) -->
    call(Reference).
+css_child('@import'(Arg)) --> ['@import'(Arg)].
 css_child(Thing) -->
     { Thing =.. [Sel,StyleOrStyles],
       ( is_list(StyleOrStyles)
@@ -72,9 +75,34 @@ css_style(Style) -->
 %
 %   True when String is the Css DCG written out as a string.
 write_css(Css, String) :-
-    phrase(Css, Elements),
-    phrase(css_tokens([], Elements), Codes), !,
+    phrase(Css, Elements0),
+    partition(['@import'(_)]>>true,
+              Elements0, ImportRules, Elements),
+    phrase(import_rules(ImportRules), Codes, Codes1),
+    phrase(css_tokens([], Elements), Codes1), !,
     string_codes(String, Codes).
+
+import_rules(['@import'(Arg)|Rest]) -->
+    "@import ",
+    { ensure_list(Arg, ArgL) }, import_args(ArgL),
+    ";\n",
+    import_rules(Rest).
+import_rules([]) --> [].
+
+import_args([url(URL)|Rest]) -->
+    !,
+    "url(\"",
+    { text_to_string(URL, URLStr),
+      string_codes(URLStr, URLCodes) },
+    URLCodes, "\")",
+    import_args(Rest).
+import_args([X|Rest]) -->
+    " ",
+    { text_to_string(X, Str),
+      string_codes(Str, Codes) },
+    Codes,
+    import_args(Rest).
+import_args([]) --> [].
 
 css_tokens(_, []) --> [].
 css_tokens(Ctx, [begin_styles(S),end_styles(S)|Next]) -->
