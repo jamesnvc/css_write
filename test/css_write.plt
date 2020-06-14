@@ -1,5 +1,6 @@
 :- module(css_write_t, []).
 :- use_module(library(plunit)).
+:- use_module(library(debug)).
 :- use_module(css_write).
 :- begin_tests(css_write).
 
@@ -67,5 +68,52 @@ body p {
     write_css(css(['@import'(url('https://example.com/font?family=123')),
                    body([], p('font-family'(123)))]),
               Txt).
+
+test(media_query_1,
+    true( Txt == "body {
+  color: red;
+}
+@media screen and (min-width: 500px) and (max-width: 999px) {
+body {
+  color: blue;
+}
+body p {
+  font-size: 2em;
+}
+}
+body p {
+  font-size: 1em;
+}
+")) :-
+    write_css(
+        css([body([color(red)],
+                  ['@media'(and([screen, min_width('500px'), max_width('999px')]),
+                           &([color(blue)],
+                             p('font-size'("2em")))),
+                   p('font-size'('1em'))])]),
+        Txt).
+
+test(media_query_2,
+    true( Txt == "body {
+  color: red;
+}
+body p {
+  font-size: 1em;
+}
+@media screen and (min-width: 500px) and (max-width: 999px) {
+body {
+  color: blue;
+}
+body p {
+  font-size: 2em;
+}
+}
+")) :-
+    write_css(
+        css([body([color(red)], [p('font-size'('1em'))]),
+             '@media'(and([screen, min_width('500px'), max_width('999px')]),
+                      body([color(blue)],
+                           p('font-size'("2em"))))]),
+        Txt).
 
 :- end_tests(css_write).

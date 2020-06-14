@@ -5,6 +5,7 @@
 :- use_module(library(lists), [append/3, last/2]).
 :- use_module(library(list_util), [take/3]).
 :- use_module(library(yall)).
+:- use_module(library(debug)).
 
 ensure_list(X, X) :- is_list(X), !.
 ensure_list(X, [X]).
@@ -38,7 +39,13 @@ css_children([Thing|Things]) -->
 
 css_child(\(Reference)) -->
    call(Reference).
-css_child('@import'(Arg)) --> ['@import'(Arg)].
+css_child('@import'(Arg)) --> !, ['@import'(Arg)].
+css_child('@media'(Query, Children)) -->
+    !,
+    [begin_media(Query)],
+    { ensure_list(Children, Children_) },
+    css_children(Children_),
+    [end_media].
 css_child(Thing) -->
     { Thing =.. [Sel,StyleOrStyles],
       ( is_list(StyleOrStyles)
@@ -123,6 +130,40 @@ css_tokens(Ctx, [begin_ctx(AddCtx)|Next]) -->
 css_tokens(Ctx, [end_ctx(_)|Next]) -->
     { butlast(Ctx, NewCtx) },
     css_tokens(NewCtx, Next).
+css_tokens(Ctx, [begin_media(Query)|Next]) -->
+    "@media ", media_query(Query), " {\n",
+    css_tokens(Ctx, Next).
+css_tokens(Ctx, [end_media|Next]) -->
+    "}\n",
+    css_tokens(Ctx, Next).
+
+media_query(and(Qs)) -->
+    !, media_query_ands(Qs).
+media_query(Elt) -->
+    media_query_elt(Elt).
+
+media_query_ands([A,B|Rest]) -->
+    media_query(A),
+    " and ",
+    media_query_ands([B|Rest]).
+media_query_ands([E]) -->
+    media_query(E).
+media_query_ands([]) --> [].
+
+media_query_elt(max_width(W)) -->
+    !,
+    { text_to_string(W, S),
+      string_codes(S, Cs) },
+    "(max-width: ",  Cs, ")".
+media_query_elt(min_width(W)) -->
+    !,
+    { text_to_string(W, S),
+      string_codes(S, Cs) },
+    "(min-width: ",  Cs, ")".
+media_query_elt(X) -->
+    { text_to_string(X, S),
+      string_codes(S, Cs) },
+    Cs.
 
 collapse_ampersands(Sels, CollapsedSels) :-
     foldl(add_selector, Sels, [], CollapsedSels).
