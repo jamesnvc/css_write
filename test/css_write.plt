@@ -116,4 +116,46 @@ body p {
                            p('font-size'("2em"))))]),
         Txt).
 
+test(anim_keyframes_1,
+    true( Txt ==  "@keyframes slidein {
+  from {
+  transform: translateX(0%);
+  }
+  to {
+  transform: translateX(100%);
+  }
+}
+")) :-
+    write_css(
+        css(['@keyframes'(
+                 slidein,
+                 [from(transform("translateX(0%)")),
+                  to(transform("translateX(100%)"))])]),
+        Txt).
+test(anim_keyframes_2,
+    true( Txt ==  ".foobar {
+  color: blue;
+  background-color: yellow;
+}
+@keyframes ping {
+  0%, 100% {
+  transform: translateY(-25%);
+  animation-timing-function: cubic-bezier(0.8,0,1,1);
+  }
+  50% {
+  transform: translateY(0);
+  animation-timing-function: cubic-bezier(0,0,0.2,1);
+  }
+}
+")) :-
+    write_css(
+        css(['.foobar'([color(blue), 'background-color'(yellow)]),
+             '@keyframes'(
+                 ping,
+                 ['0%, 100%'(transform("translateY(-25%)"),
+                             'animation-timing-function'("cubic-bezier(0.8,0,1,1)")),
+                  '50%'(transform("translateY(0)"),
+                        'animation-timing-function'("cubic-bezier(0,0,0.2,1)"))])]),
+        Txt).
+
 :- end_tests(css_write).

@@ -46,11 +46,17 @@ css_child('@media'(Query, Children)) -->
     { ensure_list(Children, Children_) },
     css_children(Children_),
     [end_media].
+css_child('@keyframes'(Name, Frames)) -->
+    !,
+    { ensure_list(Frames, Frames_),
+      text_to_string(Name, NameStr),
+      string_codes(NameStr, NameCodes) },
+    [begin_animation(NameCodes)],
+    keyframes(Frames_),
+    [end_animation].
 css_child(Thing) -->
     { Thing =.. [Sel,StyleOrStyles],
-      ( is_list(StyleOrStyles)
-      -> Styles = StyleOrStyles
-      ;  Styles = [StyleOrStyles] ),
+      ensure_list(StyleOrStyles, Styles),
       text_to_string(Sel, SelStr),
       string_codes(SelStr, SelStrCodes) },
     [begin_styles(SelStrCodes)],
@@ -136,6 +142,18 @@ css_tokens(Ctx, [begin_media(Query)|Next]) -->
 css_tokens(Ctx, [end_media|Next]) -->
     "}\n",
     css_tokens(Ctx, Next).
+css_tokens(Ctx, [begin_animation(Name)|Next]) -->
+    "@keyframes ", Name, " {\n",
+    css_tokens(Ctx, Next).
+css_tokens(Ctx, [begin_keyframe(Pos)|Next]) -->
+    "  ", Pos, " {\n",
+    css_tokens(Ctx, Next).
+css_tokens(Ctx, [end_keyframe|Next]) -->
+    "  }\n",
+    css_tokens(Ctx, Next).
+css_tokens(Ctx, [end_animation|Next]) -->
+    "}\n",
+    css_tokens(Ctx, Next).
 
 media_query(and(Qs)) -->
     !, media_query_ands(Qs).
@@ -175,3 +193,14 @@ add_selector([0'&|SubSel], Ctx, NewCtx) :-
     append(CtxHead, [NewSel], NewCtx), !.
 add_selector(SubSel, Ctx, NewCtx) :-
     append(Ctx, [SubSel], NewCtx).
+
+keyframes([]) --> [].
+keyframes([Frame|Frames]) -->
+    { Frame =.. [FramePos|Styles],
+      debug(xxx, "Frame ~w: ~w ~w", [Frame, FramePos, Styles]),
+      text_to_string(FramePos, FramePosString),
+      string_codes(FramePosString, FramePosCodes) },
+    [begin_keyframe(FramePosCodes)],
+    css_styles(Styles),
+    [end_keyframe],
+    keyframes(Frames).
