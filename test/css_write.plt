@@ -22,7 +22,7 @@ user:main_css -->
                       [li('font-weight'(bold),
                          '&:hover'(color(red)))])),
          p([color(red), 'font-size'(small)],
-           ['.thing'([margin('0 auto'),
+           ['>.thing'([margin('0 auto'),
                       'font-family'(monospace)]),
            \(user:bloop)])]).
 
@@ -47,7 +47,7 @@ p {
   color: red;
   font-size: small;
 }
-p .thing {
+p >.thing {
   margin: 0 auto;
   font-family: monospace;
 }
@@ -112,6 +112,28 @@ body p {
     write_css(
         css([body([color(red)], [p('font-size'('1em'))]),
              '@media'(and([screen, min_width('500px'), max_width('999px')]),
+                      body([color(blue)],
+                           p('font-size'("2em"))))]),
+        Txt).
+test(media_query_3,
+    true( Txt == "body {
+  color: red;
+}
+body p {
+  font-size: 1em;
+}
+@media (prefers-color-scheme: dark) and (prefers-reduced-motion: reduced) {
+body {
+  color: blue;
+}
+body p {
+  font-size: 2em;
+}
+}
+")) :-
+    write_css(
+        css([body([color(red)], [p('font-size'('1em'))]),
+             '@media'(and([color_scheme(dark), motion("reduced")]),
                       body([color(blue)],
                            p('font-size'("2em"))))]),
         Txt).

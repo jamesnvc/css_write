@@ -178,6 +178,16 @@ media_query_elt(min_width(W)) -->
     { text_to_string(W, S),
       string_codes(S, Cs) },
     "(min-width: ",  Cs, ")".
+media_query_elt(color_scheme(Theme)) -->
+    !,
+    { text_to_string(Theme, S),
+      string_codes(S, Cs) },
+    "(prefers-color-scheme: ",  Cs, ")".
+media_query_elt(motion(Type)) -->
+    !,
+    { text_to_string(Type, S),
+      string_codes(S, Cs) },
+    "(prefers-reduced-motion: ",  Cs, ")".
 media_query_elt(X) -->
     { text_to_string(X, S),
       string_codes(S, Cs) },
