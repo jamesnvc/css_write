@@ -180,4 +180,34 @@ test(anim_keyframes_2,
                         'animation-timing-function'("cubic-bezier(0,0,0.2,1)"))])]),
         Txt).
 
+test(tailwind_1,
+    true( Txt == ".bg-red-50 {
+  background-color: rgba(254, 242, 242, var(--pl-bg-opacity, 1));
+}
+@media (min-width: 768px) {
+.md\\:mt-1 {
+  margin-top: 0.25rem;
+}
+}
+.hidden {
+  display: none;
+}
+.hover\\:bg-pink-100:hover {
+  background-color: rgba(252, 231, 243, var(--pl-bg-opacity, 1));
+}
+.text-red-500 {
+  color: rgba(239, 68, 68, var(--pl-text-opacity,1));
+}
+")) :-
+    write_css(
+        css(['.bg-red-50'('background-color'("rgba(254, 242, 242, var(--pl-bg-opacity, 1))")),
+             '@media'(and([min_width("768px")]),
+                      '.md\\:mt-1'(['margin-top'("0.25rem")])),
+             '.hidden'(display("none")),
+             '.hover\\:bg-pink-100:hover'('background-color'("rgba(252, 231, 243, var(--pl-bg-opacity, 1))")),
+             '.text-red-500'(color("rgba(239, 68, 68, var(--pl-text-opacity,1))"))
+
+            ]),
+        Txt).
+
 :- end_tests(css_write).
