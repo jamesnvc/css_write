@@ -207,7 +207,6 @@ add_selector(SubSel, Ctx, NewCtx) :-
 keyframes([]) --> [].
 keyframes([Frame|Frames]) -->
     { Frame =.. [FramePos|Styles],
-      debug(xxx, "Frame ~w: ~w ~w", [Frame, FramePos, Styles]),
       text_to_string(FramePos, FramePosString),
       string_codes(FramePosString, FramePosCodes) },
     [begin_keyframe(FramePosCodes)],
