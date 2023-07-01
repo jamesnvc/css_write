@@ -210,4 +210,31 @@ test(tailwind_1,
             ]),
         Txt).
 
+test(supports_query,
+    true( Txt == "@supports (color: oklch(0% 0 0)) {
+html {
+  background-color: oklch(50% 0.163 56.65);
+}
+}
+")) :-
+    write_css(
+        css(['@supports'(color('oklch(0% 0 0)'),
+                       html('background-color'("oklch(50% 0.163 56.65)")))]),
+        Txt
+    ).
+
+test(supports_query_complex,
+    true( Txt == "@supports ((color: oklch(0% 0 0)) and (selector(:has(a, b))) and not ((text-stroke: 10px) or (-webkit-text-stroke: 10px))) {
+html {
+  background-color: oklch(50% 0.163 56.65);
+}
+}
+")) :-
+    write_css(
+        css(['@supports'(and([color('oklch(0% 0 0)'), "selector(:has(a, b))",
+                              not(or(["text-stroke: 10px", "-webkit-text-stroke: 10px"]))]),
+                         html('background-color'("oklch(50% 0.163 56.65)")))]),
+        Txt
+    ).
+
 :- end_tests(css_write).

@@ -4,6 +4,9 @@
 :- use_module(library(apply), [foldl/4, partition/4]).
 :- use_module(library(lists), [append/3, last/2]).
 :- use_module(library(list_util), [take/3]).
+:- use_module(library(dcg/high_order), [ sequence//2,
+                                         sequence//5
+                                       ]).
 :- use_module(library(yall)).
 :- use_module(library(debug)).
 
@@ -54,6 +57,12 @@ css_child('@keyframes'(Name, Frames)) -->
     [begin_animation(NameCodes)],
     keyframes(Frames_),
     [end_animation].
+css_child('@supports'(Conditions, Children)) -->
+    !,
+    { ensure_list(Children, Children_) },
+    [begin_supports(Conditions)],
+    css_children(Children_),
+    [end_supports].
 css_child(Thing) -->
     { Thing =.. [Sel,StyleOrStyles],
       ensure_list(StyleOrStyles, Styles),
@@ -148,10 +157,16 @@ css_tokens(Ctx, [begin_animation(Name)|Next]) -->
 css_tokens(Ctx, [begin_keyframe(Pos)|Next]) -->
     "  ", Pos, " {\n",
     css_tokens(Ctx, Next).
+css_tokens(Ctx, [begin_supports(Conditions)|Next]) -->
+    "@supports ", supports_conditions(Conditions), " {\n",
+    css_tokens(Ctx, Next).
 css_tokens(Ctx, [end_keyframe|Next]) -->
     "  }\n",
     css_tokens(Ctx, Next).
 css_tokens(Ctx, [end_animation|Next]) -->
+    "}\n",
+    css_tokens(Ctx, Next).
+css_tokens(Ctx, [end_supports|Next]) -->
     "}\n",
     css_tokens(Ctx, Next).
 
@@ -213,3 +228,24 @@ keyframes([Frame|Frames]) -->
     css_styles(Styles),
     [end_keyframe],
     keyframes(Frames).
+
+supports_conditions([]) --> [].
+supports_conditions(not(Rules)) -->
+    "not ", supports_conditions(Rules).
+supports_conditions(and(Rules)) -->
+    sequence("(", supports_conditions, " and ", ")", Rules).
+supports_conditions(or(Rules)) -->
+    sequence("(", supports_conditions, " or ", ")", Rules).
+supports_conditions(Rules) -->
+    { ensure_list(Rules, Rules_) },
+    sequence(supports_condition, Rules_).
+
+supports_condition(Rule) -->
+    { string(Rule), !,
+      string_codes(Rule, RuleC) },
+    "(", RuleC, ")".
+supports_condition(Rule) -->
+    { Rule =.. [Prop, Value],
+      string_codes(Prop, PropC),
+      string_codes(Value, ValueC) },
+    "(", PropC, ": ", ValueC, ")".
